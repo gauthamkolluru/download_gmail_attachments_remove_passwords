@@ -47,10 +47,12 @@ def pdf_rm_pwd() -> bool:
 
                 for password in get_password():
 
-                    if read_obj.decrypt(password) == 1:
+                    for p in [password.lower(), password.upper()]:
 
-                        print(write_pdf(file_name=f, read_pdf_obj=read_obj))
-                        break
+                        if read_obj.decrypt(p) in (1, 2):
+
+                            print(write_pdf(file_name=f, read_pdf_obj=read_obj))
+                            break
 
     return True
 
