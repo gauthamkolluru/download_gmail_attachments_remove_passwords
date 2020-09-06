@@ -22,7 +22,7 @@ def get_password() -> str:
 
 
 def read_pdf(file_name: str):
-    return pp4.PdfFileReader(file_name)
+    return pp4.PdfFileReader(file_name, strict=False)
 
 
 def write_pdf(file_name: str, read_pdf_obj: str):
@@ -47,12 +47,15 @@ def pdf_rm_pwd() -> bool:
 
                 for password in get_password():
 
-                    for p in [password.lower(), password.upper()]:
+                    if read_obj.decrypt(password.lower()) in (1, 2):
 
-                        if read_obj.decrypt(p) in (1, 2):
+                        print(write_pdf(file_name=f, read_pdf_obj=read_obj))
+                        break
 
-                            print(write_pdf(file_name=f, read_pdf_obj=read_obj))
-                            break
+                    elif read_obj.decrypt(password.upper()) in (1, 2):
+
+                        print(write_pdf(file_name=f, read_pdf_obj=read_obj))
+                        break
 
     return True
 
