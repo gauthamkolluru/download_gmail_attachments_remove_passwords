@@ -7,18 +7,25 @@ import PyPDF4 as pp4
 root_dir, passwords = read_json()
 
 
-def get_files(directory=root_dir) -> str:
+def get_files(directory=root_dir, file_type=".pdf") -> str:
 
     if os.path.exists(directory):
 
         for f in os.listdir(directory):
-            yield os.path.join(directory, f)
+
+            if f.endswith(file_type):
+                yield os.path.join(directory, f)
 
 
 def get_password() -> str:
 
-    for v in passwords:
-        yield v
+    for pwd in passwords:
+
+        if pwd.isnumeric():
+            yield pwd
+        else:
+            for p in (pwd.lower(), pwd.upper()):
+                yield p
 
 
 def read_pdf(file_name: str):
@@ -35,40 +42,43 @@ def write_pdf(file_name: str, read_pdf_obj: str):
     return file_name
 
 
-def pdf_rm_pwd() -> bool:
+def is_encrypted(ro):
+    return ro.isEncrypted
 
-    for f in get_files():
 
-        if f.endswith(".pdf"):
-
-            read_obj = read_pdf(f)
-
-            if read_obj.isEncrypted:
-
-                for password in get_password():
-
-                    if read_obj.decrypt(password.lower()) in (1, 2):
-
-                        print(write_pdf(file_name=f, read_pdf_obj=read_obj))
-                        break
-
-                    elif read_obj.decrypt(password.upper()) in (1, 2):
-
-                        print(write_pdf(file_name=f, read_pdf_obj=read_obj))
-                        break
-
-    return True
+def pdf_rm_pwd(ro, pwd):
+    """
+    ro : PyPDF4.PdfFileReader() Object
+    pdw : Password
+    """
+    return ro.decrypt(pwd)
 
 
 def main():
 
-    return pdf_rm_pwd()
+    decrypted_files = []
+
+    for f in get_files():
+
+        fro = read_pdf(f)
+
+        if is_encrypted(fro):
+
+            for password in get_password():
+
+                try:
+                    if pdf_rm_pwd(fro, password) != 0:
+                        decrypted_files.append(f)
+                        write_pdf(file_name=f, read_pdf_obj=fro)
+                        break
+                except Exception as e:
+                    print(e, f)
+
+    return decrypted_files
 
 
 if __name__ == '__main__':
 
-    if main():
+    decrypted_files_list = main()
 
-        print("Process Completed")
-    else:
-        print("Process Incompleted")
+    print(decrypted_files_list)
